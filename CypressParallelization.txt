@@ -1,0 +1,203 @@
+Up to Parallelization process
+
+
+https://docs.cypress.io/guides/guides/parallelization.html#Overview
+
+
+https://github.com/cypress-io/cypress-documentation/issues/206
+https://hub.docker.com/r/cypress/base
+https://github.com/cypress-io/cypress/blob/develop/packages/server/lib/util/ci_provider.js
+https://docs.cypress.io/guides/references/changelog.html#3-8-3
+https://docs.cypress.io/guides/guides/command-line.html#Commands
+https://docs.cypress.io/guides/dashboard/projects.html#Setup
+https://docs.cypress.io/guides/guides/command-line.html#cypress-run
+
+https://github.com/cypress-io/cypress/issues/2520	-- Parallel tests without recording on dashboard
+https://www.cypress.io/pricing/
+
+https://testdriven.io/blog/running-cypress-tests-in-parallel/		-- without dashboard
+https://www.youtube.com/watch?v=0eSET5MdcYs
+https://github.com/testdrivenio/cypress-parallel			-- sample code of above.
+https://github.com/agoldis/sorry-cypress
+https://docs.knapsackpro.com/2019/cypress-parallel-testing-with-jenkins-pipeline-stages
+https://github.com/SgSridhar/cypress-docker-parallel-tests/blob/master/package.json#L25
+
+https://github.com/puppeteer/puppeteer
+
+https://watirmelon.blog/2019/07/06/my-thoughts-on-cypress-io/
+https://www.reddit.com/r/javascript/comments/97hktn/how_many_of_you_use_cypress/
+
+
+https://github.com/agoldis/sorry-cypress/issues/6
+
+###############################################################################################################
+
+
+Turning on parallelization
+=================================
+1.Refer to your CI provider’s documentation on how to set up multiple machines to run in your CI environment.		<<< We are already doing that for lib unit testing.
+2.
+cypress run --record --key=abc123 --parallel
+
+Running tests in parallel requires the --record flag be passed. This ensures Cypress can properly collect the data needed to parallelize future runs. 	<<< I don't understand why we need to record it it if we want to run in parallel??
+
+Commands: cypress run
+---------------------
+--record	Whether to record the test run
+
+
+https://docs.cypress.io/guides/guides/command-line.html#cypress-run
+-----------------------------------------------------------------------------
+cypress run --record --key <record-key>
+Record video of tests running after setting up your project to record. After setting up your project you will be given a Record Key.
+cypress run --record --key 
+
+
+setting up your project to record.
+------------------------------------------
+https://docs.cypress.io/guides/dashboard/projects.html#Setup
+Click on the Runs tab of your project within the Test Runner.
+Click Set up Project to Record.
+You will need to log in to record your tests, so you will need to log in to the Cypress Dashboard here.		<< Can we just paid for Cypress Dashboard: Josh said we can..
+
+Balance strategy
+--------------------
+Cypress will automatically balance your spec files across the available machines in your CI provider. 
+Cypress calculates which spec file to run based on the data collected from previous runs. This ensures that your spec files run as fast as possible, with no need for manual configuration.
+
+Duration estimation is done separately for every browser the spec file was tested against.
+There is extra time in the run for each spec: starting the browser, encoding and uploading the video to the dashboard, requesting the next spec to run.
+
+
+Grouping test runs
+-------------------------
+cypress run --group <name>
+cypress run --group develop-env
+cypress run --group admin-tests --spec 'cypress/integration/admin/**/*'		You can add multiple groups to the same run by passing a different name. This can help distinguish groups of specs from each other.
+cypress run --group user-tests --spec 'cypress/integration/user/**/*'
+(Specifying the --ci-build-id may also be necessary.)
+
+For multiple runs to be grouped into a single run, it is required for CI machines to share a common CI build ID environment variable. 
+Typically these CI machines will run in parallel or within the same build workflow or pipeline, but it is not required to use Cypress parallelization to group runs. 
+Grouping of runs can be utilized independently of Cypress parallelization.
+
+
+cypress run --record --group Windows/Chrome-69 --browser chrome
+cypress run --record --group Mac/Chrome-70 --browser chrome
+cypress run --record --group Linux/Electron
+
+cypress run --record --group 1x-electron
+cypress run --record --group 2x-chrome --browser chrome --parallel
+cypress run --record --group 4x-electron --parallel
+
+cypress run --record --group package/admin --spec 'cypress/integration/packages/admin/**/*'
+cypress run --record --group package/customer --spec 'cypress/integration/packages/customer/**/*'
+cypress run --record --group package/guest --spec 'cypress/integration/packages/guest/**/*'
+
+cypress run --record --parallel --ci-build-id $BUILD_TAG
+
+
+
+
+https://watirmelon.blog/2019/07/06/my-thoughts-on-cypress-io/
+=====================================================================
+I agree with some points, but the part of running Cypress tests in parallel can be easily solved by defining different test scripts, that run specific test suites in separate Docker containers, for instance.
+I have just experimented running Cypress tests in parallel on GitLab successfully.
+See https://gitlab.com/wlsf82/learning-vuejs/pipelines/76641974
+and https://gitlab.com/wlsf82/learning-vuejs/commit/8245dcb0e261eb53c492da340214360afd8b3cf7
+
+
+Grouping by browser
+=================================
+cypress run --record --group Windows/Chrome-69 --browser chrome
+cypress run --record --group Mac/Chrome-70 --browser chrome
+cypress run --record --group Linux/Electron
+
+
+glob pattern:
+=================================
+cypress run --spec cypress/integration/*_mocked_spec
+cypress run --spec cypress/**/*.smoke.*
+<< match user-list.smoke.js
+         user-update.stubbed.js
+
+
+setting Docker in Bamboo and added following in Docker File. Worked for me!
+===================================================================================================
+RUN apt-get install --assume-yes --no-install-recommends \ xvfb libgtk2.0-0 libnotify-dev libgconf-2-4 libnss3 libxss1 libasound2
+docker image available with all cypress dependencies already installed: https://hub.docker.com/r/cypress/base
+
+
+
+https://github.com/cypress-io/cypress/blob/develop/packages/server/lib/util/ci_provider.js
+===================================================================================================
+const isBamboo = () => {
+  return process.env.bamboo_buildNumber
+}
+const CI_PROVIDERS = {
+  'bamboo': isBamboo,
+  'bitbucket': 'BITBUCKET_BUILD_NUMBER',
+  'buildkite': 'BUILDKITE',
+  'circle': 'CIRCLECI',
+  ...
+}
+const _providerCiParams = () => {
+  return {
+    ...
+    bamboo: extract([
+      'bamboo_buildNumber',
+      'bamboo_buildResultsUrl',
+      'bamboo_planRepository_repositoryUrl',
+      'bamboo_buildKey',
+    ]),
+   ...
+  }
+}
+const _providerCommitParams = () => {
+  const { env } = process
+
+  return {
+    ...
+    bamboo: {
+      sha: env.bamboo_planRepository_revision,
+      branch: env.bamboo_planRepository_branch,
+      // message: ???
+      authorName: env.bamboo_planRepository_username,
+      // authorEmail: ???
+      remoteOrigin: env.bamboo_planRepository_repositoryURL,
+      // defaultBranch: ???
+    },
+    ...
+  }
+}
+
+
+https://docs.cypress.io/guides/references/changelog.html#3-8-3
+=======================================================================
+We now collect more environment variables for Bamboo CI when recording for the Dashboard. Addresses #4895.
+
+
+Linking CI machines for parallelization or grouping
+=======================================================================
+A CI build ID is used to associate multiple CI machines to one test run. 
+This identifier is based on environment variables that are unique to each CI build, and vary based on CI provider.
+Cypress has out-of-the-box support for most of the commonly-used CI providers, so you would typically not need to directly set the CI build ID via the --ci-build-id flag.
+
+CI Build ID environment variables by provider
+Bamboo	bamboo_buildNumber
+
+You can pass a different value to link agents to the same run. 
+For example, if you are using Jenkins and think the environment variable BUILD_TAG is more unique than the environment variable BUILD_NUMBER, 
+pass the BUILD_TAG value via CLI --ci-build-id flag.
+"cypress run --record --parallel --ci-build-id $BUILD_TAG"
+
+
+
+
+
+
+
+
+
+
+

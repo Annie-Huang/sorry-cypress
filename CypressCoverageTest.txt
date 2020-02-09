@@ -1,0 +1,192 @@
+https://www.youtube.com/watch?v=C8g5X4vCZJA
+https://docs.cypress.io/guides/tooling/code-coverage.html#Introduction			<< the youtube video is pretty much covering what's explaining in this page.
+
+https://github.com/cypress-io/code-coverage						<< The @cypress/code-coverage plugin
+https://github.com/skylock/cypress-angular-coverage-example !!!!			<< Need to take a look at this example if you do it for angular app.
+
+
+https://docs.cypress.io/guides/tooling/code-coverage.html#Examples			<< All the examples
+https://github.com/cypress-io/cypress/issues/687
+https://github.com/cypress-io/cypress-example-todomvc-redux				<< Got code coverage setting
+https://github.com/bahmutov/cypress-and-jest
+https://github.com/cypress-io/cypress-example-realworld					<< Got code coverage setting	Maybe I should fork this repo as well...
+https://github.com/cypress-io/cypress-example-realworld/blob/master/package.json
+https://coveralls.io/
+https://github.com/bahmutov/stop-only
+
+
+==============================================================================
+
+Istanbul.js - code
+instrumentation library
+
+nyc - CLI around
+Istanbul.js
+
+npm install -D nyc
+npx nyc node .
+npx nyc --reporter html --reporter text node .
+
+then:
+open coverage/index.html file	<< Open the file manually and you will see coverage report
+
+
+npx nyc instrument index.js
+Global coverage variable __coverage_. If you see this variable - the code was instructmented by Istanbul 
+
+Instrument code:
+babel-plugin-istanbul
+{
+  "plugins": ["istanbul"]
+}
+
+Add into your .babelrc file:
+{
+  "env": {
+    "test": {
+      "plugins": ["instanbul"]
+    }
+  }
+}
+run:
+NODE_ENV=test npm start
+
+
+babel-plugin-istanbul should work with any Babel
+Babel + Parcel.js
+Babel + Webpack
+Babel + Browserify
+Babel + Rollup.js
+
+
+In https://github.com/cypress-io/cypress-example-todomvc-redux on master branch
+npm run dev
+"dev": "cross-env NODE_ENV=test start-test 1234 cypress:open",
+
+---------------
+
+npm install -D @cypress/code-coverage nyc istanbul-lib-coverage
+In C:\react\cypress-example-todomvc-redux\cypress\support\index.js, add:
+import '@cypress/code-coverage/support'
+
+In C:\react\cypress-example-todomvc-redux\cypress\plugins\index.js, add
+module.exports = (on, config) => {
+  on('task', require('@cypress/code-coverage/task'))
+}
+
+-----------------
+
+Coverage as a guide to writing E2E tests
+
+Unit + E2E coverage:
+The hard way
+Unit test with (Jest | Ava | Mocha) --> Save unit test coverage
+								+ with "nyc merge" to merge two coverage files
+End-to-End tests with Cypress --> Save E2E test coverage
+
+Unit + E2E coverage:
+The Cypress way:
+Unit test and End-to-end tests with Cypress --> Combined Code Coverage
+E.g.
+In C:\react\cypress-example-todomvc-redux\cypress\plugins\index.js, add
+module.exports = (on, config) => {
+  on('task', require('@cypress/code-coverage/task'))
+  on('file:preprocessor', require('@cypress/code-coverage/use-babelrc'))	<<<< This line to combine it.
+}
+But...
+The unit tests have to be put under cypress folder, like:
+C:\react\cypress-example-todomvc-redux\cypress\integration\selectors-spec.js
+I don't really like how they have to put the unit test into the cypress folder instead of putting align inthe source file like angular.
+
+
+Coverage as guard:
+Fail build if coverage drops below N%
+npx nyc report --reporter text-summary --check-coverage --statements 200	<< 200 is the %, it will always failed because the top is 100%
+
+
+Store HTML report on CI			<<< Good advice
+# store HTML coverage folder
+- store_artifacts:
+    path: coverage/lcov-report
+# store test run video
+- store_artifacts
+    path: cypress/videos
+- store_artifacts
+    path: cypress/screenshots
+
+
+Coverage as a Service
+# load balance tests on 4 machines
+# https://oncypress.io/parallelization
+- cypress/run
+    record: true
+    parallel: true
+    parallelism: 4
+Meaning...
+Each of the 4 CI machines only runs a subset of the spec files; generates partial code coverage??
+
+
+Coveralls, Codecov, etc				<<< 3rd party coverage service
+npm install -D converalls
+# send coverage report to Coveralls.io
+# COVERALLS_REPO_TOEKN=...
+cat lcov.info | coveralls
+So:
+3rd party coverage service
+- collects and merges results
+- show coverage information see example
+- adds checks on pull requests
+
+
+Tips: catch exclusive tests:
+{
+  "config": {
+    "pre-git": {
+      "pre-comiit": ["npx stop-only --warn --folder cypress"],
+      "pre-push": ["npx stop-only --folder cypress"]
+    }
+  }
+}
+https://github.com/bahmutov/stop-only
+
+
+Instrument Server Code
+{
+  "script": {
+    "start": "node server",
+    "start:coverage": "nyc --silent node server"
+  }
+}
+const express = require('express')
+const app = express()
+if (global.__coverage__) {
+  require('@cypress/code-coverage/middleware/express')(app)
+}
+
+If you clone https://github.com/cypress-io/cypress-example-realworld
+and then run "npm run dev:coverage"
+When cypress is oepn, then one of the test, e.g. new-post-spec.js
+Then you can open
+coverage/lcov-report/index.html, then you can see all the 
+client/* folder
+server/* folder
+All these are for backend coverages.
+
+
+More examples":
+https://docs.cypress.io/guides/tooling/code-coverage.html#Examples
+Help us with your code coverage examples:
+- Angular + Typescript
+- Svelte
+- Rollup.js
+
+
+
+
+
+
+
+
+
+
+

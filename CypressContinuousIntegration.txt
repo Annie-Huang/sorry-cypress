@@ -1,0 +1,170 @@
+https://www.youtube.com/watch?v=saYovXS9Llk (Continuous Integration with Cypress)
+https://github.com/cypress-io/
+https://github.com/cypress-io/cypress-docker-images
+
+https://docs.cypress.io/guides/guides/debugging.html
+https://docs.cypress.io/guides/guides/continuous-integration.html#Setting-up-CI
+https://docs.cypress.io/guides/guides/parallelization.html#Overview
+
+https://github.com/cypress-io/cypress-example-kitchensink		<<< arrrr.... It doesn't have bamboo!!!! It got Jenkins, Circles, Buildkite, BitBucket
+https://bitbucket.org/product/features/pipelines
+https://www.npmjs.com/package/start-server-and-test
+https://www.npmjs.com/package/angular-http-server
+
+https://docs.cypress.io/guides/guides/continuous-integration.html#Caching
+https://docs.cypress.io/guides/references/configuration.html#Options
+
+http://cypress.slides.com/cypress-io/cypress-on-ci#/
+
+==============================================================================================
+
+cypress/base (OS deps + Node)
+cypress/browser (cypress/base + Chrome)
+cypress/included (cypress/browsers + global cypress module)
+
+nyx cypress verify   
+# either exits fine
+# or shows the OS / install error
+
+npx cypress cache path		<< check where is cypress installed
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+CI steps:
+git checkout
+restore cache
+npm install	<<< This will download cypress and take a long time, What you should do is 
+cache ~/.npm and ~/.cache
+cypress run
+
+npx cypress cache path
+
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+A tipical build code & start server:
+npm install -D npm-run-all		<< if you use &&, it only works well in window\
+npx run-s lint:ci build:prod		<< This is mainly for logging purpose. so you can see through the log easily rather than have two command running parallel and randomly log things
+
+npm install -D start-server-and-test
+npx start-server-and-test ci:start-server 4200 cy:run
+   ci:start-server 4200		-- npmCommand to start server		angular-http-server --path ./dist/ngws -p 4200
+   cy:run			-- cypress command to run		cypress run
+
+
+npm install -D angular-http-server			<< Can do deep linking, meaning you can directly access a URL, rather than going to home and navigate to the site.
+angular-http-server --path ./dist/ngws -p 4200
+
+Lint: Unit Tests, Prod Build, Cypress Tests
+"ci": "run-s lint:ci build:prod ci:cy-run"
+"lint:ci": "ng lint"
+"build:prod": "ng build --prod"
+"ci:cy-run": "start-server-and-test ci:start-server 4200 cy:run"
+"ci:start-server": "angular-http-server --path ./dist/ngws -p 4200"
+"cy:run": "cypress run"
+
+
+TeamCity Artifact paths:
+dist => dist
+coverage => coverage
+cypress\videos => cypress\videos
+cypress\screenshots => cypress\screenshots
+
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Locally run tests against "localhost:8000"
+in cypress.json
+	{
+	  "baseUrl": "http://localhost:8080",
+	  "defaultCommandTimeout":1000
+	}
+
+Testing staging server
+in CLI
+	cypress run --config baseUrl=https://staging.server.com
+	cypress run --config baseUrl=https://staging.server.com,defaultCommandTimeout=5000
+in env
+	export CYPRESS_baseUrl=https://staging.server.com
+	cypress run
+	export CYPRESS_baseUrl=https://staging.server.com
+	export CYPRESS_defaultCommandTimeout=5000
+	cypress run
+
+
+Cypress settings:
+- baseUrl
+- defaultCommandTimeout
+- pageLoadTimeout
+- requestTimeout
+- blacklistHosts
+- modifyObstructiveCode
+
+User plugins file
+// cypress/plugins/index.js
+module.exports  = (on, config) => {
+    config.baseUrl = 'https://staging.server.com/app/'
+    // change more options...
+    return config
+}
+
+Cypress settings: Resolution preference (the downer the higher priority)
+1. cypress.json
+2    < environment variable
+3       < CLI parameter
+4.         < plugin
+5.            < run-time Cypress.config(...)
+
+Cypress settings: Coming soon (issue#1369)
+cypress run --config "/path/to/config.json"
+
+
+Pass env variable: need test username and password
+{
+  "env": {
+ 	   "username": "Joe Tester"				<< User name is not case sensitive
+ 	   "password": ""					<< Password is case sensitive
+   }
+}
+const name = Cypress.env('username')
+expect(name, 'username').to.be.a('string').and.be.not.empty
+cy.get('#name').type(name)
+const pass = Cypress.env('password')
+assert(pass, 'forgot password')
+
+When run it with cli:
+export CYPRESS_password=***
+cypress run				<< Cypress automatically puts all unknown env variables that start with CYPRESS_ into env vars
+
+Tip: user as-a locally
+[my-app]
+CYPRESS_password=test1234
+npm i -g as-a
+as-a my-app cypress run
+
+cypress run --record --key=***
+npx cypress run --spec "cypress/integration/prod/*.js"
+
+Common problem:
+===================
+Unknown shown for Branch/Author/Commit/Message
+Cypress run locally but fail on CI
+	cypress run		<< uses headless electron (old version) -- local -- can get video
+	cypress run --headed	<< uses headed electron just like 'cypress open' -- cannot get video
+	cypress run --browser chrome	<< uses headed Crhome just like 'cypress open'
+	There might be race condition between the test and the applicatino. CI with its speed difference catches the problem. Control the tests more by
+	- add more 'should' assertions
+	- add mroe network route waits
+	If you mock XHR calls, make sure the API isn't running locally when running tests
+
+
+
+
+
+
+
+
+
+
+
+
