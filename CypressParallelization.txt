@@ -27,8 +27,10 @@ https://github.com/puppeteer/puppeteer
 https://watirmelon.blog/2019/07/06/my-thoughts-on-cypress-io/
 https://www.reddit.com/r/javascript/comments/97hktn/how_many_of_you_use_cypress/
 
-
 https://github.com/agoldis/sorry-cypress/issues/6
+https://hub.docker.com/u/agoldis
+https://sorry-cypress-demo.herokuapp.com/
+https://github.com/cypress-io/cypress/issues/4876
 
 ###############################################################################################################
 
@@ -39,9 +41,133 @@ C:\react\sorry-cypress\example>npm install
 Window: Update the following:
 C:\Users\Annie\AppData\Local\Cypress\Cache\3.8.3\Cypress\resources\app\packages\server\config\app.yml
 
+Command: cypress run --parallel --record --key xxx --ci-build-id <buildId>
+
+Window Result:
 C:\react\sorry-cypress\example>npx cypress run --record --key whatever --parallel --ci-build-id local-01
 <<< Doesn't seem to work, Nothing shows in terminal and nothing in http://localhost:1234/. Maybe only work in linux machine??
 
+
+Mac: Update the following:
+ip-10-101-36-114:lodgement-ui anniehuang$ DEBUG=cypress:* cypress version
+  cypress:cli cli starts with arguments ["/Users/anniehuang/.nvm/versions/node/v12.13.1/bin/node","/Users/anniehuang/projects/lodgement-ui/node_modules/.bin/cypress","version"] +0ms
+  cypress:cli NODE_OPTIONS is not set +0ms
+  cypress:cli printing Cypress version +2ms
+  cypress:cli Reading binary package.json from: /Users/anniehuang/Library/Caches/Cypress/3.4.1/Cypress.app/Contents/Resources/app/package.json +0ms
+Cypress package version: 3.4.1
+Cypress binary version: 3.4.1
+
+   /Users/agoldis/Library/Caches/Cypress/3.4.1/Cypress.app/Contents/Resources/app/package.json
+   /Users/agoldis/Library/Caches/Cypress/3.4.1/Cypress.app/Contents/Resources/app/
+   /Users/agoldis/Library/Caches/Cypress/3.4.1/Cypress.app/Contents/Resources/app/packages/server/config/app.yml
+
+/Users/anniehuang/Library/Caches/Cypress/3.4.1/Cypress.app/Contents/Resources/app/package.json
+/Users/anniehuang/Library/Caches/Cypress/3.4.1/Cypress.app/Contents/Resources/app/packages/server/config/app.yml
+
+Mac Result 1:
+192-168-1-106:example anniehuang$ pwd
+/Users/anniehuang/projects/sorry-cypress/example
+192-168-1-106:example anniehuang$ npx cypress run --record --key whatever --parallel --ci-build-id local-01
+Recording this run failed because the request was invalid.
+Request should follow postRunRequest@2.2.0 schema
+Errors:
+[
+  "data.recordKey must be uuid format"
+]
+<<<< I think it errors out because I am supposed to run in lodgement-UI?
+
+Mac Result 2:
+Try this in lodgement-ui:
+Find a random e2e app:
+192-168-1-106:upsert-e2e anniehuang$ pwd
+/Users/anniehuang/projects/lodgement-ui/apps/upsert-e2e
+
+192-168-1-106:upsert-e2e anniehuang$ npx cypress run --record --key whatever --parallel --ci-build-id local-01
+HostIframe plugin enabled, running in host: false
+You passed the --record flag but this project has not been setup to record.
+
+This project is missing the 'projectId' inside of 'cypress.json'.
+
+We cannot uniquely identify this project without this id.
+
+You need to setup this project to record. This will generate a unique 'projectId'.
+
+Alternatively if you omit the --record flag this project will run without recording.
+---------
+
+
+
+
+
+
+Try on sorry-cypress - Run the demo locally
+================================================
+192-168-1-106:sorry-cypress anniehuang$ pwd
+/Users/anniehuang/projects/sorry-cypress
+
+192-168-1-106:sorry-cypress anniehuang$ docker-compose -f docker-compose.full.yml up
+<<< is supposed download three docker files list in https://hub.docker.com/u/agoldis ???
+
+http://localhost:8080/
+<<< has the same header ('All Runs') as the https://sorry-cypress-demo.herokuapp.com/
+
+Reconfigurate:
+Reconfigure Cypress to use api_url: "http://localhost:1234/",
+/Users/anniehuang/Library/Caches/Cypress/3.4.1/Cypress.app/Contents/Resources/app/packages/server/config/app.yml
+
+In /Users/anniehuang/projects/lodgement-ui/apps/upsert-e2e/cypress.json
+Add:
+  "projectId": "myProject",
+
+In lodgement-ui: have two terminals to run the following.
+npm run start:host
+npm run start:upsert:host
+
+Then:
+192-168-1-106:upsert-e2e anniehuang$ pwd
+/Users/anniehuang/projects/lodgement-ui/apps/upsert-e2e
+
+192-168-1-106:upsert-e2e anniehuang$ npx cypress run --record --key whatever --parallel --ci-build-id local-01
+
+The terminal that run "docker-compose -f docker-compose.full.yml up" (in sorry-cypress) seems to log something
+The terminal that run "npx cypress run --record --key whatever --parallel --ci-build-id local-01" seems failed for all test cases.
+
+
+You will need to setup S3 to be able to upload failed test screenshots. Replace the credentials in docker-compose.full.yml after you've set up S3 bucket.
+
+Question:
+- How to install this thing. It's not in npmjs. So we just clone and fork the repo to follow the instruction to set up the server??
+-
+
+
+
+
+
+
+The repository consists of 3 packages - you can deploy them on your own infrastructure:
+-------------------------------------------------------------------------------------------
+192-168-1-106:director anniehuang$ pwd
+/Users/anniehuang/projects/sorry-cypress/packages/director
+
+192-168-1-106:director anniehuang$ npm install
+192-168-1-106:director anniehuang$ npm run build
+192-168-1-106:director anniehuang$ npm run start
+
+
+
+
+
+
+
+
+
+
+
+
+Gold:
+==========
+- Set up sorry-cypress.
+- If successful set up sorry-cypress, we need to create a doco to reverse this this sequential run if anything wrong with setting.
 
 
 Turning on parallelization
