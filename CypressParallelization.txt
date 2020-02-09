@@ -32,6 +32,17 @@ https://github.com/agoldis/sorry-cypress/issues/6
 
 ###############################################################################################################
 
+Try on sorry-cypress/example/
+================================
+C:\react\sorry-cypress\example>npm install
+
+Window: Update the following:
+C:\Users\Annie\AppData\Local\Cypress\Cache\3.8.3\Cypress\resources\app\packages\server\config\app.yml
+
+C:\react\sorry-cypress\example>npx cypress run --record --key whatever --parallel --ci-build-id local-01
+<<< Doesn't seem to work, Nothing shows in terminal and nothing in http://localhost:1234/. Maybe only work in linux machine??
+
+
 
 Turning on parallelization
 =================================
@@ -50,7 +61,7 @@ https://docs.cypress.io/guides/guides/command-line.html#cypress-run
 -----------------------------------------------------------------------------
 cypress run --record --key <record-key>
 Record video of tests running after setting up your project to record. After setting up your project you will be given a Record Key.
-cypress run --record --key 
+cypress run --record --key
 
 
 setting up your project to record.
@@ -62,7 +73,7 @@ You will need to log in to record your tests, so you will need to log in to the 
 
 Balance strategy
 --------------------
-Cypress will automatically balance your spec files across the available machines in your CI provider. 
+Cypress will automatically balance your spec files across the available machines in your CI provider.
 Cypress calculates which spec file to run based on the data collected from previous runs. This ensures that your spec files run as fast as possible, with no need for manual configuration.
 
 Duration estimation is done separately for every browser the spec file was tested against.
@@ -77,8 +88,8 @@ cypress run --group admin-tests --spec 'cypress/integration/admin/**/*'		You can
 cypress run --group user-tests --spec 'cypress/integration/user/**/*'
 (Specifying the --ci-build-id may also be necessary.)
 
-For multiple runs to be grouped into a single run, it is required for CI machines to share a common CI build ID environment variable. 
-Typically these CI machines will run in parallel or within the same build workflow or pipeline, but it is not required to use Cypress parallelization to group runs. 
+For multiple runs to be grouped into a single run, it is required for CI machines to share a common CI build ID environment variable.
+Typically these CI machines will run in parallel or within the same build workflow or pipeline, but it is not required to use Cypress parallelization to group runs.
 Grouping of runs can be utilized independently of Cypress parallelization.
 
 
@@ -179,15 +190,15 @@ We now collect more environment variables for Bamboo CI when recording for the D
 
 Linking CI machines for parallelization or grouping
 =======================================================================
-A CI build ID is used to associate multiple CI machines to one test run. 
+A CI build ID is used to associate multiple CI machines to one test run.
 This identifier is based on environment variables that are unique to each CI build, and vary based on CI provider.
 Cypress has out-of-the-box support for most of the commonly-used CI providers, so you would typically not need to directly set the CI build ID via the --ci-build-id flag.
 
 CI Build ID environment variables by provider
 Bamboo	bamboo_buildNumber
 
-You can pass a different value to link agents to the same run. 
-For example, if you are using Jenkins and think the environment variable BUILD_TAG is more unique than the environment variable BUILD_NUMBER, 
+You can pass a different value to link agents to the same run.
+For example, if you are using Jenkins and think the environment variable BUILD_TAG is more unique than the environment variable BUILD_NUMBER,
 pass the BUILD_TAG value via CLI --ci-build-id flag.
 "cypress run --record --parallel --ci-build-id $BUILD_TAG"
 
